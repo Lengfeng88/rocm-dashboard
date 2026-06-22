@@ -1,67 +1,49 @@
-name: Weekly Engineering Report
+name: Weekly ROCm Report
 
 on:
   schedule:
-    - cron: '0 9 * * 1'   # Every Monday 09:00 UTC
-  workflow_dispatch:        # Manual trigger
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
 
 jobs:
-  generate-report:
+  update-dashboard:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: rocm_health
-          POSTGRES_USER: rocm
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Init database schema
-        env:
-          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-        run: psql -h localhost -U rocm -d rocm_health -f db/schema.sql
+        run: pip install httpx python-dotenv openai sqlalchemy psycopg2-binary
 
       - name: Collect GitHub data
         env:
-          GITHUB_TOKEN:        ${{ secrets.GH_PAT }}
-          DATABASE_URL_SYNC:   postgresql://rocm:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/rocm_health
-          DATABASE_URL:        postgresql+asyncpg://rocm:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/rocm_health
-        run: python -m collectors.run_all
+          GITHUB_TOKEN:      ${{ secrets.GH_PAT }}
+          DATABASE_URL_SYNC: ${{ secrets.DATABASE_URL_SYNC }}
+          DEEPSEEK_API_KEY:  ${{ secrets.DEEPSEEK_API_KEY }}
+        run: python collectors/run_all.py
 
-      - name: Generate AI weekly report
+      - name: Generate AI weekly summary
         env:
-          DEEPSEEK_API_KEY:    ${{ secrets.DEEPSEEK_API_KEY }}
-          DATABASE_URL_SYNC:   postgresql://rocm:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/rocm_health
-        run: |
-          mkdir -p report/output
-          python -m ai.weekly_summary
+          DATABASE_URL_SYNC: ${{ secrets.DATABASE_URL_SYNC }}
+          DEEPSEEK_API_KEY:  ${{ secrets.DEEPSEEK_API_KEY }}
+        run: python -m ai.weekly_summary --output /tmp/rocm_weekly.md
 
-      - name: Upload report artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: weekly-report-${{ github.run_number }}
-          path: report/output/
+      - name: Rebuild static dashboard
+        env:
+          DATABASE_URL_SYNC: ${{ secrets.DATABASE_URL_SYNC }}
+        run: python scripts/build_static.py
 
-      - name: Post summary to job
+      - name: Commit and push
         run: |
-          echo "## ROCm Weekly Engineering Report" >> $GITHUB_STEP_SUMMARY
-          cat report/output/weekly_*.md >> $GITHUB_STEP_SUMMARY
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --staged --quiet || git commit -m "chore: weekly update $(date +%Y-%m-%d)"
+          git push
