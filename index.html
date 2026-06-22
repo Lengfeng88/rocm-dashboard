@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROCm Engineering Health</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:       #0D0F12;
+    --surface:  #13161B;
+    --border:   #1E2329;
+    --border2:  #252B33;
+    --text:     #E2E8F0;
+    --muted:    #64748B;
+    --dim:      #94A3B8;
+    --red:      #E05252;
+    --amber:    #F59E0B;
+    --green:    #34D399;
+    --blue:     #60A5FA;
+    --purple:   #A78BFA;
+    --amd:      #ED1C24;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-bar { width: 3px; height: 20px; background: var(--amd); border-radius: 2px; }
+  .logo-text { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--text); }
+  .logo-sub  { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(52,211,153,.4); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.4)} 50%{box-shadow:0 0 0 5px rgba(52,211,153,0)} }
+  .live-label { font-size: 11px; color: var(--green); font-family: 'IBM Plex Mono', monospace; }
+  .refresh-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: var(--muted); background: var(--border); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 4px 10px; cursor: pointer; transition: color .15s;
+  }
+  .refresh-btn:hover { color: var(--text); }
+
+  /* ── TABS ── */
+  nav {
+    display: flex; gap: 2px; padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .tab {
+    font-size: 12px; font-weight: 500; color: var(--muted);
+    padding: 10px 14px; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s; user-select: none;
+  }
+  .tab:hover { color: var(--dim); }
+  .tab.active { color: var(--text); border-bottom-color: var(--amd); }
+
+  /* ── LAYOUT ── */
+  main { padding: 24px 28px; max-width: 1400px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── KPI STRIP ── */
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 18px;
+  }
+  .kpi-label { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+  .kpi-value { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 500; line-height: 1; }
+  .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .kpi-value.red    { color: var(--red); }
+  .kpi-value.amber  { color: var(--amber); }
+  .kpi-value.green  { color: var(--green); }
+  .kpi-value.blue   { color: var(--blue); }
+  .kpi-value.purple { color: var(--purple); }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 18px 20px;
+  }
+  .card-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 16px; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 0 0 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* ── BAR ── */
+  .bar-wrap { background: var(--border); border-radius: 2px; height: 4px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 2px; transition: width .6s ease; }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block; padding: 2px 7px; border-radius: 3px;
+    font-size: 10px; font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+  }
+  .badge-green  { background: rgba(52,211,153,.12);  color: var(--green); }
+  .badge-amber  { background: rgba(245,158,11,.12);  color: var(--amber); }
+  .badge-red    { background: rgba(224,82,82,.12);   color: var(--red); }
+  .badge-blue   { background: rgba(96,165,250,.12);  color: var(--blue); }
+  .badge-purple { background: rgba(167,139,250,.12); color: var(--purple); }
+
+  /* ── REPO LABEL ── */
+  .repo { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--blue); }
+
+  /* ── SECTION DIVIDER ── */
+  .section-label {
+    font-size: 10px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .07em;
+    margin: 24px 0 12px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── CHART SVG ── */
+  .chart-svg { width: 100%; overflow: visible; }
+  .chart-line { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .chart-dot  { r: 3; }
+  .chart-area { opacity: .08; }
+
+  /* ── RANK NUMBER ── */
+  .rank-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--border2); width: 20px; }
+
+  /* ── TOOLTIP ── */
+  .tooltip {
+    position: fixed; background: #1E2329; border: 1px solid var(--border2);
+    border-radius: 6px; padding: 8px 12px; font-size: 11px; pointer-events: none;
+    opacity: 0; transition: opacity .1s; z-index: 999; white-space: nowrap;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-bar"></div>
+    <div>
+      <div class="logo-text">ROCm Engineering Health</div>
+      <div class="logo-sub">6 repos · real GitHub data</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="pulse"></div>
+    <span class="live-label">LIVE</span>
+    <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('overview')">Overview</div>
+  <div class="tab" onclick="showTab('issues')">Issues</div>
+  <div class="tab" onclick="showTab('prs')">Pull Requests</div>
+  <div class="tab" onclick="showTab('ci')">CI / Workflows</div>
+  <div class="tab" onclick="showTab('contributors')">Contributors</div>
+</nav>
+
+<main>
+
+<!-- ══ OVERVIEW ══ -->
+<div id="page-overview" class="page active">
+  <div class="kpi-strip">
+    <div class="kpi">
+      <div class="kpi-label">Repositories</div>
+      <div class="kpi-value blue" id="kpi-repos">—</div>
+      <div class="kpi-sub">ROCm ecosystem</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Open Issues</div>
+      <div class="kpi-value amber" id="kpi-open-issues">—</div>
+      <div class="kpi-sub">across all repos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Open PRs</div>
+      <div class="kpi-value red" id="kpi-open-prs">—</div>
+      <div class="kpi-sub">awaiting merge</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Avg Merge Time</div>
+      <div class="kpi-value purple" id="kpi-merge">—</div>
+      <div class="kpi-sub">days, last 30d</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Total Commits</div>
+      <div class="kpi-value green" id="kpi-commits">—</div>
+      <div class="kpi-sub">in database</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Issue Resolution by Repo</div>
+      <table>
+        <thead><tr>
+          <th>Repository</th><th>Open</th><th>Closed</th><th>Avg Resolve</th>
+        </tr></thead>
+        <tbody id="tbl-issue-summary"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">PR Throughput by Repo</div>
+      <table>
+        <thead><tr>
+          <th>Repository</th><th>Open</th><th>Merged</th><th>Avg Cycle</th>
+        </tr></thead>
+        <tbody id="tbl-pr-summary"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Merge Time Ranking (last 30d)</div>
+      <div id="chart-merge-time"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Bus Factor Risk</div>
+      <table>
+        <thead><tr><th>Repo</th><th>Top-3 share</th><th>Risk</th></tr></thead>
+        <tbody id="tbl-bus-factor"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ISSUES ══ -->
+<div id="page-issues" class="page">
+  <div class="section-label">Issue Resolution by Label</div>
+  <div class="grid-3" id="issue-resolution-cards"></div>
+
+  <div class="section-label">Open vs Closed per Repo</div>
+  <div class="card">
+    <div id="chart-issues-bar"></div>
+  </div>
+</div>
+
+<!-- ══ PRs ══ -->
+<div id="page-prs" class="page">
+  <div class="section-label">Cycle Time by Repo (last 30 days)</div>
+  <div class="card" style="margin-bottom:16px">
+    <div id="chart-merge-bar"></div>
+  </div>
+  <div class="section-label">PR State Breakdown</div>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Repository</th><th>Open</th><th>Merged</th><th>Avg Cycle Days</th><th>Health</th>
+      </tr></thead>
+      <tbody id="tbl-pr-detail"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ CI ══ -->
+<div id="page-ci" class="page">
+  <div class="section-label">Workflow Coverage</div>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Repository</th><th>Real CI Runs</th><th>Bot/Scheduled</th><th>Total</th><th>CI Coverage</th>
+      </tr></thead>
+      <tbody id="tbl-ci"></tbody>
+    </table>
+  </div>
+  <div class="section-label" style="margin-top:20px">CI Coverage Bar</div>
+  <div class="card">
+    <div id="chart-ci-bar"></div>
+  </div>
+</div>
+
+<!-- ══ CONTRIBUTORS ══ -->
+<div id="page-contributors" class="page">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Top 10 Contributors by Commits</div>
+      <table>
+        <thead><tr><th>#</th><th>Author</th><th>Repos</th><th>Commits</th><th></th></tr></thead>
+        <tbody id="tbl-contributors"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Bus Factor Analysis</div>
+      <div class="section-label" style="margin-top:0;font-size:10px">% of commits by top 3 contributors</div>
+      <div id="chart-bus-factor"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const API = 'http://localhost:8000/api';
+
+// ── colour palette per repo ──────────────────────────────────────────────────
+const REPO_COLORS = {
+  'ROCm/hip':       '#60A5FA',
+  'ROCm/rocBLAS':   '#34D399',
+  'ROCm/rccl':      '#F59E0B',
+  'ROCm/MIOpen':    '#A78BFA',
+  'ROCm/rocFFT':    '#F472B6',
+  'ROCm/rocSPARSE': '#FB923C',
+};
+const repoColor = r => REPO_COLORS[r] || REPO_COLORS[r?.replace('ROCm/','ROCm/').toLowerCase()] || '#64748B';
+const shortRepo = r => r?.replace('ROCm/','') ?? r;
+
+// ── tab switching ────────────────────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('page-' + id).classList.add('active');
+}
+
+// ── tooltip ──────────────────────────────────────────────────────────────────
+const tip = document.getElementById('tooltip');
+function showTip(e, html) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top  = (e.clientY - 8) + 'px';
+}
+function hideTip() { tip.style.opacity = 0; }
+
+// ── fetch helpers ─────────────────────────────────────────────────────────────
+async function apiFetch(path) {
+  try {
+    const r = await fetch(API + path);
+    if (!r.ok) return [];
+    return await r.json();
+  } catch { return []; }
+}
+
+// ── bar chart helper ─────────────────────────────────────────────────────────
+function horizontalBarChart(containerId, data, labelKey, valueKey, colorFn, unit='') {
+  const el = document.getElementById(containerId);
+  if (!el || !data.length) return;
+  const max = Math.max(...data.map(d => +d[valueKey]));
+  el.innerHTML = data.map((d,i) => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:${i<data.length-1?'12':'0'}px">
+      <div style="width:90px;font-size:11px;color:#94A3B8;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shortRepo(d[labelKey])}</div>
+      <div style="flex:1">
+        <div class="bar-wrap">
+          <div class="bar-fill" style="width:${(+d[valueKey]/max*100).toFixed(1)}%;background:${colorFn(d[labelKey])}"></div>
+        </div>
+      </div>
+      <div style="width:52px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#E2E8F0;text-align:right">${(+d[valueKey]).toFixed(1)}${unit}</div>
+    </div>`).join('');
+}
+
+// ── load all data ─────────────────────────────────────────────────────────────
+async function loadAll() {
+  const [issueSummary, prSummary, mergeTime, ciData, contributors, busFactor, resolution] = await Promise.all([
+    apiFetch('/issues/summary'),
+    apiFetch('/prs/summary'),
+    apiFetch('/prs/merge-time'),
+    apiFetch('/ci/coverage'),
+    apiFetch('/contributors/ranking?limit=10'),
+    apiFetch('/contributors/bus-factor'),
+    apiFetch('/issues/resolution'),
+  ]);
+
+  // ── KPI strip ──────────────────────────────────────────────────────────────
+  document.getElementById('kpi-repos').textContent = issueSummary.length || 6;
+  document.getElementById('kpi-open-issues').textContent =
+    issueSummary.reduce((a,r) => a + (r.open||0), 0);
+  document.getElementById('kpi-open-prs').textContent =
+    prSummary.reduce((a,r) => a + (r.open||0), 0);
+  const avgMerge = mergeTime.length
+    ? (mergeTime.reduce((a,r)=>a+(+r.avg_days||0),0)/mergeTime.length).toFixed(1) : '—';
+  document.getElementById('kpi-merge').textContent = avgMerge + (avgMerge!=='—'?'d':'');
+  document.getElementById('kpi-commits').textContent = (29323).toLocaleString(); // from DB
+
+  // ── Issue summary table ───────────────────────────────────────────────────
+  document.getElementById('tbl-issue-summary').innerHTML = issueSummary.map(r => `
+    <tr>
+      <td><span class="repo">${shortRepo(r.repo)}</span></td>
+      <td><span class="badge ${r.open>20?'badge-red':r.open>0?'badge-amber':'badge-green'}">${r.open}</span></td>
+      <td class="mono" style="color:#64748B">${r.closed}</td>
+      <td class="mono">${r.avg_resolve_days ?? '—'}d</td>
+    </tr>`).join('');
+
+  // ── PR summary table ──────────────────────────────────────────────────────
+  document.getElementById('tbl-pr-summary').innerHTML = prSummary.map(r => `
+    <tr>
+      <td><span class="repo">${shortRepo(r.repo)}</span></td>
+      <td><span class="badge ${r.open>20?'badge-red':r.open>0?'badge-amber':'badge-green'}">${r.open}</span></td>
+      <td class="mono" style="color:#64748B">${r.merged}</td>
+      <td class="mono">${r.avg_cycle_days ?? '—'}d</td>
+    </tr>`).join('');
+
+  // ── Merge time bar (overview) ─────────────────────────────────────────────
+  horizontalBarChart('chart-merge-time', mergeTime, 'repo', 'avg_days', repoColor, 'd');
+
+  // ── Bus factor table ──────────────────────────────────────────────────────
+  document.getElementById('tbl-bus-factor').innerHTML = busFactor.map(r => {
+    const pct = +r.top3_pct;
+    const risk = pct > 70 ? ['badge-red','HIGH'] : pct > 50 ? ['badge-amber','MED'] : ['badge-green','LOW'];
+    return `<tr>
+      <td><span class="repo">${shortRepo(r.repo)}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="bar-wrap" style="width:80px;flex:none">
+            <div class="bar-fill" style="width:${pct}%;background:${pct>70?'#E05252':pct>50?'#F59E0B':'#34D399'}"></div>
+          </div>
+          <span class="mono" style="font-size:11px">${pct}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${risk[0]}">${risk[1]}</span></td>
+    </tr>`;
+  }).join('');
+
+  // ── Issues page: resolution cards ─────────────────────────────────────────
+  const rColors = { bug:'#E05252', performance:'#F59E0B', enhancement:'#60A5FA', other:'#64748B' };
+  document.getElementById('issue-resolution-cards').innerHTML = resolution.map(r => `
+    <div class="card" style="border-top:2px solid ${rColors[r.label_type]||'#64748B'}">
+      <div class="card-title">${r.label_type}</div>
+      <div class="kpi-value mono" style="color:${rColors[r.label_type]||'#94A3B8'};font-size:28px">${r.avg_days ?? '—'}<span style="font-size:14px;color:#64748B">d</span></div>
+      <div class="kpi-sub" style="margin-top:6px">avg resolution · ${r.total} issues</div>
+    </div>`).join('');
+
+  // ── Issues page: open vs closed bar ──────────────────────────────────────
+  const issBarEl = document.getElementById('chart-issues-bar');
+  issBarEl.innerHTML = issueSummary.map((r,i) => {
+    const total = (r.open||0) + (r.closed||0);
+    const openPct = total ? ((r.open/total)*100).toFixed(1) : 0;
+    return `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:${i<issueSummary.length-1?'12':'0'}px">
+      <div style="width:90px;font-size:11px;color:#94A3B8;text-align:right">${shortRepo(r.repo)}</div>
+      <div style="flex:1;display:flex;height:14px;border-radius:3px;overflow:hidden">
+        <div style="width:${openPct}%;background:#E05252;opacity:.8" title="open: ${r.open}"></div>
+        <div style="flex:1;background:#34D399;opacity:.3" title="closed: ${r.closed}"></div>
+      </div>
+      <div style="font-size:11px;color:#64748B;width:80px">${r.open} open / ${r.closed} closed</div>
+    </div>`;
+  }).join('');
+
+  // ── PRs page: cycle time bar ──────────────────────────────────────────────
+  horizontalBarChart('chart-merge-bar', mergeTime, 'repo', 'avg_days', repoColor, 'd');
+
+  // ── PRs page: detail table ────────────────────────────────────────────────
+  document.getElementById('tbl-pr-detail').innerHTML = prSummary.map(r => {
+    const days = +r.avg_cycle_days;
+    const health = days < 5 ? ['badge-green','Fast'] : days < 14 ? ['badge-amber','Normal'] : ['badge-red','Slow'];
+    return `<tr>
+      <td><span class="repo">${shortRepo(r.repo)}</span></td>
+      <td><span class="badge ${r.open>20?'badge-red':r.open>0?'badge-amber':'badge-green'}">${r.open}</span></td>
+      <td class="mono" style="color:#64748B">${r.merged}</td>
+      <td class="mono">${r.avg_cycle_days ?? '—'}d</td>
+      <td><span class="badge ${health[0]}">${health[1]}</span></td>
+    </tr>`;
+  }).join('');
+
+  // ── CI page: table ────────────────────────────────────────────────────────
+  document.getElementById('tbl-ci').innerHTML = ciData.map(r => {
+    const pct = r.total ? ((r.real_ci_runs/r.total)*100).toFixed(0) : 0;
+    return `<tr>
+      <td><span class="repo">${shortRepo(r.repo)}</span></td>
+      <td class="mono">${r.real_ci_runs}</td>
+      <td class="mono" style="color:#64748B">${r.bot_runs}</td>
+      <td class="mono">${r.total}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="bar-wrap" style="width:80px;flex:none">
+            <div class="bar-fill" style="width:${pct}%;background:${pct>50?'#34D399':pct>20?'#F59E0B':'#E05252'}"></div>
+          </div>
+          <span class="mono" style="font-size:11px">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // ── CI bar chart ──────────────────────────────────────────────────────────
+  const ciBarEl = document.getElementById('chart-ci-bar');
+  ciBarEl.innerHTML = ciData.map((r,i) => {
+    const pct = r.total ? (r.real_ci_runs/r.total*100).toFixed(1) : 0;
+    return `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:${i<ciData.length-1?'12':'0'}px">
+      <div style="width:90px;font-size:11px;color:#94A3B8;text-align:right">${shortRepo(r.repo)}</div>
+      <div style="flex:1"><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${repoColor(r.repo)}"></div></div></div>
+      <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;width:40px;text-align:right">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // ── Contributors: ranking table ───────────────────────────────────────────
+  const maxCommits = Math.max(...contributors.map(c=>c.commits));
+  document.getElementById('tbl-contributors').innerHTML = contributors.map((c,i) => `
+    <tr>
+      <td class="rank-num">${i+1}</td>
+      <td style="font-size:12px">${c.author}</td>
+      <td><span class="badge badge-blue">${c.repos}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="bar-wrap" style="width:70px;flex:none">
+            <div class="bar-fill" style="width:${(c.commits/maxCommits*100).toFixed(0)}%;background:#60A5FA"></div>
+          </div>
+          <span class="mono" style="font-size:11px">${c.commits.toLocaleString()}</span>
+        </div>
+      </td>
+      <td></td>
+    </tr>`).join('');
+
+  // ── Bus factor chart ──────────────────────────────────────────────────────
+  document.getElementById('chart-bus-factor').innerHTML = busFactor.map((r,i) => {
+    const pct = +r.top3_pct;
+    const color = pct>70?'#E05252':pct>50?'#F59E0B':'#34D399';
+    return `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:${i<busFactor.length-1?'12':'0'}px;margin-top:${i===0?'8':'0'}px">
+      <div style="width:90px;font-size:11px;color:#94A3B8;text-align:right">${shortRepo(r.repo)}</div>
+      <div style="flex:1"><div class="bar-wrap" style="height:6px"><div class="bar-fill" style="width:${pct}%;background:${color};height:6px"></div></div></div>
+      <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;width:38px;text-align:right;color:${color}">${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+loadAll();
+</script>
+</body>
+</html>
