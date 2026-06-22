@@ -1,24 +1,25 @@
+## Weekly Engineering Health Report (2026-06-22)
+
 ## Executive Summary
-Overall ROCm library health is mixed: issue closure rates remain high across all repos, but CI pass rates are critically low for rccl and hip. Bus factor risks are elevated in rocSPARSE and rocFFT, while PR cycle times are generally healthy.
+Overall engineering health is mixed. Issue closure rates remain high across all repos, but CI is critically broken in two key repos. Bus factor risk is elevated in rocSPARSE. PR cycle times are generally healthy.
 
 ## Key Findings
-- **ROCm/hip**: 7 open issues (avg 556 days to close), 30 open PRs (avg 10.4 days cycle), CI pass rate 0.0% (0/1 runs passed).
-- **ROCm/MIOpen**: 3 open issues (avg 392 days), 6 open PRs (avg 12.9 days), bus factor 33.7% (lowest risk).
-- **ROCm/rccl**: 0 open issues, 7 open PRs (avg 7.1 days), CI pass rate 23.4% (11/47 passed), bus factor 41.4%.
-- **ROCm/rocSPARSE**: 0 open issues, 1 open PR (avg 3.5 days), bus factor 81.3% (highest risk).
-- **ROCm/rocFFT**: 0 open issues, 3 open PRs (avg 4.1 days), bus factor 52.7%.
-- **ROCm/rocBLAS**: 0 open issues, 0 open PRs (avg 2.2 days cycle), bus factor 45.0%.
+- **Issues**: 10 open issues total across 6 repos. HIP has 7 open (avg resolve 556 days). MIOpen has 3 open (avg 392 days). All other repos have 0 open.
+- **PRs**: 47 open PRs total. HIP leads with 30 open (avg cycle 10.4 days). rocBLAS has 0 open PRs with fastest cycle (2.2 days).
+- **CI**: HIP had 22 runs, 0 passed (0% pass rate). rccl had 48 runs, 12 passed (25% pass rate). Both have severe failures.
+- **Bus Factor**: rocSPARSE top 3 contributors account for 84.9% of commits. rocFFT at 53.3%, rocBLAS 45.4%, rccl 43.2%, HIP 40.7%, MIOpen 33.9%.
 
 ## Risk Flags 🚨
-1. **CI failures in rccl and hip**: rccl pass rate 23.4% (36/47 runs failed); hip pass rate 0.0% (0/1 passed). Both block release confidence.
-2. **Bus factor crisis in rocSPARSE**: top 3 contributors own 81.3% of commits—single point of failure risk.
-3. **Aging issues in hip**: 7 open issues with average 556 days to close indicates chronic triage delays.
+- **CI Critical Failure**: HIP CI has 0% pass rate (22/22 failed). rccl CI at 25% pass rate (36/48 failed). Both require immediate investigation.
+- **Bus Factor High**: rocSPARSE (84.9% top3) is dangerously concentrated. Single contributor loss could halt development.
+- **HIP Issue Backlog**: 7 open issues with average 556-day resolution time indicates chronic triage delays.
 
 ## Recommendations
-1. **Immediate CI investigation**: rccl and hip teams must prioritize CI pipeline fixes this week. Escalate to DevOps if needed.
-2. **Knowledge transfer for rocSPARSE**: schedule cross-training sessions to reduce bus factor from 81.3% to below 60% within 30 days.
-3. **Issue triage for hip**: assign dedicated engineer to resolve or close the 7 open issues; target 30-day resolution.
+1. **CI Recovery**: Escalate HIP and rccl CI failures to DevOps. Assign dedicated engineers to diagnose and fix within 48 hours.
+2. **Bus Factor Mitigation**: For rocSPARSE, require code reviews from at least 2 engineers and document critical knowledge areas.
+3. **HIP Issue Triage**: Reduce open issues by 50% this month. Assign priority labels and set 30-day resolution targets.
 
 ## Positive Signals ✅
-- **Zero open issues** in rccl, rocSPARSE, rocFFT, and rocBLAS—strong closure discipline.
-- **Fast PR cycle times**: rocBLAS averages 2.2 days, rocSPARSE 3.5 days, rocFFT 4.1 days—excellent throughput.
+- **Zero Open Issues**: rocBLAS, rocFFT, rocSPARSE, rccl all have 0 open issues.
+- **Fast PR Cycles**: rocBLAS (2.2 days), rocSPARSE (3.5 days), rocFFT (4.1 days) show excellent throughput.
+- **High Merge Volume**: MIOpen (2,242 merged PRs), HIP (2,147), rccl (1,661) demonstrate strong output.
