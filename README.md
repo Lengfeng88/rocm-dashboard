@@ -1,8 +1,6 @@
 # ROCm GitHub Engineering Analytics Dashboard
 
-Demo(https://lengfeng88.github.io/rocm-dashboard/)
-
-A full-stack engineering analytics platform that tracks the health of 6 AMD ROCm open-source repositories in real time.
+A full-stack engineering analytics platform that tracks the health of 6 AMD ROCm open-source repositories in real time.(Demo https://lengfeng88.github.io/rocm-dashboard/)
 
 **Live data from:** ROCm/HIP · ROCm/rocBLAS · ROCm/rccl · ROCm/MIOpen · ROCm/rocFFT · ROCm/rocSPARSE
 
