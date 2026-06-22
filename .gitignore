@@ -1,0 +1,94 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env.local
+.env.*.local
+
+# ── Secrets / credentials ─────────────────────────────────────────────────────
+.env
+.env.production
+.env.staging
+secrets/
+*.pem
+*.key
+*.cert
+config/local_*.yaml
+
+# ── Database ──────────────────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+alembic/versions/*.pyc
+
+# ── Data / cache ──────────────────────────────────────────────────────────────
+data/raw/
+data/processed/
+*.parquet
+*.csv.gz
+*.pickle
+*.pkl
+ml/models/*.joblib      # trained model artefacts — regenerate from training
+report/output/          # generated PDFs (artefacts, not source)
+.cache/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Testing / coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.lcov
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+*.log.*
+
+# ── Node (React dashboard) ────────────────────────────────────────────────────
+dashboard/node_modules/
+dashboard/.next/
+dashboard/build/
+dashboard/dist/
+dashboard/.env.local
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.dockerignore          # keep this file itself tracked
+docker-compose.override.yml
+
+# ── Temporary / OS ────────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+# Node
+node_modules/
+frontend/node_modules/
+package-lock.json
+frontend/package-lock.json

@@ -1,0 +1,51 @@
+# ── HTTP / async ──────────────────────────────────────────────────────────────
+httpx[http2]==0.27.0          # async HTTP client (REST + GraphQL collectors)
+aiohttp==3.9.5                # fallback async HTTP (webhook listeners)
+tenacity==8.3.0               # retry / back-off for API rate limits
+
+# ── Data processing ───────────────────────────────────────────────────────────
+polars==0.20.31               # fast DataFrame ETL (Rust-backed)
+pandas==2.2.2                 # compatibility shim for sklearn / Power BI export
+numpy==1.26.4                 # numerical ops, ML feature matrix
+pyarrow==16.1.0               # Parquet I/O, Polars ↔ Pandas bridge
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.30            # ORM + Core (async engine)
+asyncpg==0.29.0               # async PostgreSQL driver (SQLAlchemy asyncio)
+psycopg2-binary==2.9.9        # sync psycopg2 for Alembic migrations
+alembic==1.13.1               # schema migrations
+
+# ── API backend ───────────────────────────────────────────────────────────────
+fastapi==0.111.0              # async REST API
+uvicorn[standard]==0.30.1     # ASGI server
+pydantic==2.7.3               # request / response validation
+pydantic-settings==2.3.0      # settings management (.env / environment vars)
+
+# ── AI / LLM ──────────────────────────────────────────────────────────────────
+anthropic==0.28.0             # Claude API — weekly AI summaries
+
+# ── ML / Prediction (Phase 8) ────────────────────────────────────────────────
+scikit-learn==1.5.0           # Ridge regression, pipeline, StandardScaler
+joblib==1.4.2                 # model serialisation
+
+# ── Report generation ─────────────────────────────────────────────────────────
+weasyprint==62.3              # HTML → PDF report rendering
+jinja2==3.1.4                 # report HTML templating
+markdown-it-py==3.0.0         # Markdown → HTML (summary rendering)
+
+# ── Scheduling / CLI ──────────────────────────────────────────────────────────
+apscheduler==3.10.4           # in-process scheduler (fallback for non-GHA envs)
+click==8.1.7                  # CLI entry-points (run_all, build_pdf, etc.)
+python-dotenv==1.0.1          # .env file loading
+
+# ── Observability ─────────────────────────────────────────────────────────────
+structlog==24.2.0             # structured JSON logging
+sentry-sdk[fastapi]==2.5.1    # error tracking (optional — comment out if unused)
+
+# ── Dev / testing ─────────────────────────────────────────────────────────────
+pytest==8.2.2
+pytest-asyncio==0.23.7
+pytest-cov==5.0.0
+httpx[mock]                   # respx / mock transport for collector tests
+respx==0.21.1                 # httpx mock library
+factory-boy==3.3.0            # test data factories
