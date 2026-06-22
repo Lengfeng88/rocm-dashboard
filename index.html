@@ -154,6 +154,9 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 </style>
+<script>
+const STATIC_DATA = {"issueSummary": [{"repo": "ROCm/hip", "open": 7, "closed": 940, "avg_resolve_days": 556.0}, {"repo": "ROCm/MIOpen", "open": 3, "closed": 1077, "avg_resolve_days": 392.0}, {"repo": "ROCm/rccl", "open": 0, "closed": 138, "avg_resolve_days": 83.4}, {"repo": "ROCm/rocSPARSE", "open": 0, "closed": 47, "avg_resolve_days": 86.0}, {"repo": "ROCm/rocFFT", "open": 0, "closed": 109, "avg_resolve_days": 199.5}, {"repo": "ROCm/rocBLAS", "open": 0, "closed": 172, "avg_resolve_days": 138.6}], "prSummary": [{"repo": "ROCm/hip", "open": 30, "merged": 2147, "avg_cycle_days": 10.4}, {"repo": "ROCm/rccl", "open": 7, "merged": 1661, "avg_cycle_days": 7.1}, {"repo": "ROCm/MIOpen", "open": 6, "merged": 2242, "avg_cycle_days": 12.9}, {"repo": "ROCm/rocFFT", "open": 3, "merged": 373, "avg_cycle_days": 4.1}, {"repo": "ROCm/rocSPARSE", "open": 1, "merged": 392, "avg_cycle_days": 3.5}, {"repo": "ROCm/rocBLAS", "open": 0, "merged": 1266, "avg_cycle_days": 2.2}], "mergeTime": [{"repo": "ROCm/rccl", "avg_days": 0.3, "total_merged": 3}], "ciData": [{"repo": "ROCm/rccl", "real_ci_runs": 48, "bot_runs": 43, "total_runs": 100}, {"repo": "ROCm/hip", "real_ci_runs": 22, "bot_runs": 73, "total_runs": 100}, {"repo": "ROCm/MIOpen", "real_ci_runs": 0, "bot_runs": 100, "total_runs": 100}, {"repo": "ROCm/rocSPARSE", "real_ci_runs": 0, "bot_runs": 100, "total_runs": 100}, {"repo": "ROCm/rocFFT", "real_ci_runs": 0, "bot_runs": 100, "total_runs": 100}, {"repo": "ROCm/rocBLAS", "real_ci_runs": 0, "bot_runs": 7, "total_runs": 7}], "contributors": [{"author": "pfultz2", "repos": 4, "commits": 1567}, {"author": "amcamd", "repos": 2, "commits": 1408}, {"author": "mangupta", "repos": 1, "commits": 1116}, {"author": "Mayank Daga", "repos": 1, "commits": 1014}, {"author": "ntrost57", "repos": 4, "commits": 918}, {"author": "atamazov", "repos": 1, "commits": 899}, {"author": "emankov", "repos": 1, "commits": 875}, {"author": "TorreZuk", "repos": 2, "commits": 771}, {"author": "Daniel Lowell", "repos": 1, "commits": 698}, {"author": "amd-jingz", "repos": 1, "commits": 620}], "busFactor": [{"repo": "ROCm/rocSPARSE", "total_commits": 1846, "top3_commits": 1568, "top3_pct": 84.9}, {"repo": "ROCm/rocFFT", "total_commits": 2111, "top3_commits": 1126, "top3_pct": 53.3}, {"repo": "ROCm/rocBLAS", "total_commits": 5585, "top3_commits": 2534, "top3_pct": 45.4}, {"repo": "ROCm/rccl", "total_commits": 1981, "top3_commits": 856, "top3_pct": 43.2}, {"repo": "ROCm/hip", "total_commits": 6312, "top3_commits": 2571, "top3_pct": 40.7}, {"repo": "ROCm/MIOpen", "total_commits": 10155, "top3_commits": 3447, "top3_pct": 33.9}], "resolution": [{"label_type": "enhancement", "avg_days": 806.5, "total": 111}, {"label_type": "performance", "avg_days": 772.4, "total": 51}, {"label_type": "other", "avg_days": 382.8, "total": 2105}, {"label_type": "bug", "avg_days": 329.4, "total": 216}]};
+</script>
 </head>
 <body>
 
@@ -375,15 +378,13 @@ function horizontalBarChart(containerId, data, labelKey, valueKey, colorFn, unit
 
 // ── load all data ─────────────────────────────────────────────────────────────
 async function loadAll() {
-  const [issueSummary, prSummary, mergeTime, ciData, contributors, busFactor, resolution] = await Promise.all([
-    apiFetch('/issues/summary'),
-    apiFetch('/prs/summary'),
-    apiFetch('/prs/merge-time'),
-    apiFetch('/ci/coverage'),
-    apiFetch('/contributors/ranking?limit=10'),
-    apiFetch('/contributors/bus-factor'),
-    apiFetch('/issues/resolution'),
-  ]);
+  const issueSummary  = STATIC_DATA.issueSummary;
+  const prSummary     = STATIC_DATA.prSummary;
+  const mergeTime     = STATIC_DATA.mergeTime;
+  const ciData        = STATIC_DATA.ciData;
+  const contributors  = STATIC_DATA.contributors;
+  const busFactor     = STATIC_DATA.busFactor;
+  const resolution    = STATIC_DATA.resolution;
 
   // ── KPI strip ──────────────────────────────────────────────────────────────
   document.getElementById('kpi-repos').textContent = issueSummary.length || 6;
